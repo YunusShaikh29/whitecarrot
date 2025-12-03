@@ -10,7 +10,7 @@ export default function Home() {
 
   useEffect(() => {
     if (data?.user) {
-      router.replace("/protectedPage");
+      router.replace("/dashboard");
     }
   }, [data?.user, router]);
 
@@ -26,7 +26,7 @@ export default function Home() {
         onClick={() =>
           authClient.signIn.social({
             provider: "google",
-            callbackURL: "/protectedPage",
+            callbackURL: "/dashboard",
           })
         }
         
