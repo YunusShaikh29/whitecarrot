@@ -15,7 +15,7 @@ datasource db {
 }
 
 model user {
-  id            String    @id @default(cuid())
+  id            String    @id @default(uuid())
   name          String?
   email         String    @unique
   emailVerified Boolean   @default(false)
@@ -25,10 +25,11 @@ model user {
 
   sessions      session[]
   accounts      account[]
+  companies     Company[]
 }
 
 model session {
-  id        String   @id @default(cuid())
+  id        String   @id @default(uuid())
   expiresAt DateTime
   token     String   @unique
   createdAt DateTime @default(now())
@@ -41,7 +42,7 @@ model session {
 }
 
 model account {
-  id                    String    @id @default(cuid())
+  id                    String    @id @default(uuid())
   accountId             String
   providerId            String
   userId                String
@@ -61,10 +62,86 @@ model account {
 }
 
 model verification {
-  id         String   @id @default(cuid())
+  id         String   @id @default(uuid())
   identifier String
   value      String
   expiresAt  DateTime
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
+}
+
+
+model Company {
+  id              String    @id @default(uuid())
+  slug            String    @unique
+  name            String
+  description     String?
+  websiteUrl      String?
+  logo            String?    
+  bannerImage     String?   
+  primaryColor    String?   @default("#000000") // Brand color
+  secondaryColor  String?   @default("#FFFFFF") // Brand color
+  userId          String    
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  user     user      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sections section[]
+  jobs     job[]
+}
+
+model section {
+  id        String   @id @default(uuid())
+  companyId String
+  type      SectionType
+  title     String?
+  content   Json?    
+  order     Int      @default(0) // For drag-and-drop ordering
+  isVisible Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@index([companyId, order])
+}
+
+enum SectionType {
+  HERO
+  ABOUT
+  CULTURE
+  JOBS
+}
+
+model job {
+  id            String    @id @default(uuid())
+  companyId     String
+  title         String
+  description   String?
+  location      String
+  jobType       JobType
+  workMode      WorkMode
+  department    String?
+  salaryRange   Json? // { min: number, max: number, currency: string }
+  applicationUrl String?
+  isActive      Boolean?   @default(true)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime @updatedAt
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@index([companyId, isActive])
+}
+
+enum JobType {
+  FULL_TIME
+  PART_TIME
+  CONTRACT
+  INTERNSHIP
+}
+
+enum WorkMode {
+  REMOTE
+  HYBRID
+  ON_SITE
 }
