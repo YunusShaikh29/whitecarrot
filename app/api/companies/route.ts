@@ -15,24 +15,17 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const companies = await db.company.findMany({
+    const company = await db.company.findFirst({
       where: {
         userId: session.user.id,
       },
-      orderBy: {
-        updatedAt: "desc",
-      },
     });
 
-    if(companies.length === 0) {
-        return NextResponse.json({ companies: [] });
-    }
-
-    return NextResponse.json({ companies });
+    return NextResponse.json({ company });
   } catch (error) {
-    console.error("Error fetching companies:", error);
+    console.error("Error fetching company:", error);
     return NextResponse.json(
-      { error: "Failed to fetch companies" },
+      { error: "Failed to fetch company" },
       { status: 500 }
     );
   }
@@ -58,16 +51,27 @@ export async function POST(request: Request) {
         .min(1)
         .regex(/^[a-z0-9-]+$/, "Slug must be lowercase letters, numbers, and hyphens only"),
       description: z.string().optional(),
-      websiteUrl: z.string().url().optional().or(z.literal("")),
+      websiteUrl: z.url().optional().or(z.literal("")),
     });
 
     const validatedData = schema.parse(body);
 
-    const existingCompany = await db.company.findUnique({
+    const existingUserCompany = await db.company.findFirst({
+      where: { userId: session.user.id },
+    });
+
+    if (existingUserCompany) {
+      return NextResponse.json(
+        { error: "You already have a company. Each recruiter can only have one company." },
+        { status: 400 }
+      );
+    }
+
+    const existingSlug = await db.company.findUnique({
       where: { slug: validatedData.slug },
     });
 
-    if (existingCompany) {
+    if (existingSlug) {
       return NextResponse.json(
         { error: "A company with this slug already exists" },
         { status: 400 }

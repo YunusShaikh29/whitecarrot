@@ -25,7 +25,7 @@ model user {
 
   sessions      session[]
   accounts      account[]
-  companies     Company[]
+  company       Company? 
 }
 
 model session {
@@ -81,7 +81,7 @@ model Company {
   bannerImage     String?   
   primaryColor    String?   @default("#000000") // Brand color
   secondaryColor  String?   @default("#FFFFFF") // Brand color
-  userId          String    
+  userId          String    @unique 
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
 

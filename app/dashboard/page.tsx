@@ -18,7 +18,7 @@ interface Company {
 export default function DashboardPage() {
   const { data: session, isPending } = authClient.useSession();
   const router = useRouter();
-  const [companies, setCompanies] = useState<Company[]>([]);
+  const [company, setCompany] = useState<Company | null>(null);
   const [loading, setLoading] = useState(true);
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [formData, setFormData] = useState({
@@ -32,28 +32,26 @@ export default function DashboardPage() {
 
   const url = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
 
-  // Redirect if not authenticated
   useEffect(() => {
     if (!isPending && !session?.user) {
       router.replace("/");
     }
   }, [session, isPending, router]);
 
-  // Fetch companies
   useEffect(() => {
     if (session?.user) {
-      fetchCompanies();
+      fetchCompany();
     }
   }, [session?.user]);
 
-  const fetchCompanies = async () => {
+  const fetchCompany = async () => {
     try {
       setLoading(true);
       const response = await axios.get(url + "/api/companies");
-      setCompanies(response.data.companies || []);
+      setCompany(response.data.company || null);
     } catch (err) {
-      console.error("Error fetching companies:", err);
-      setError("Failed to load companies");
+      console.error("Error fetching company:", err);
+      setError("Failed to load company");
     } finally {
       setLoading(false);
     }
@@ -89,6 +87,7 @@ export default function DashboardPage() {
         websiteUrl: formData.websiteUrl || null,
       });
 
+      setCompany(response.data.company);
       router.push(`/company/${response.data.company.slug}/edit`);
     } catch (err) {
       if (axios.isAxiosError(err) && err.response?.data?.error) {
@@ -118,17 +117,20 @@ export default function DashboardPage() {
       <div className="max-w-6xl mx-auto">
         <div className="flex justify-between items-center mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
+            <h1 className="text-xl md:text-3xl font-bold text-gray-900">Dashboard</h1>
             <p className="text-gray-600 mt-1">
               Welcome back, {session.user.name || session.user.email}
             </p>
           </div>
+          {!company && (
           <button
             onClick={() => setShowCreateForm(!showCreateForm)}
-            className="px-6 py-3 bg-black text-white rounded-lg hover:bg-gray-900 transition-colors"
+            className="px-2 py-2 text-xs md:px-6 md:py-3 bg-black text-white rounded-lg hover:bg-gray-900 transition-colors flex justify-center items-center"
           >
-            {showCreateForm ? "Cancel" : "+ Create Company"}
+            {showCreateForm ? "Cancel" : "Create Company"}
           </button>
+
+          )}
         </div>
 
         {error && (
@@ -230,76 +232,67 @@ export default function DashboardPage() {
           </div>
         )}
 
-        {companies.length === 0 ? (
+        {!company ? (
           <div className="text-center py-12 bg-white rounded-lg border border-gray-200">
             <p className="text-gray-500 text-lg mb-4">
-              You don't have any companies yet.
+              You don't have a company yet.
             </p>
             <button
               onClick={() => setShowCreateForm(true)}
               className="px-6 py-3 bg-black text-white rounded-lg hover:bg-gray-900"
             >
-              Create Your First Company
+              Create Your Company
             </button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {companies.map((company) => (
-              <div
-                key={company.id}
-                className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow"
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
+            <div className="flex items-start justify-between mb-4">
+              {company.logo ? (
+                <img
+                  src={company.logo}
+                  alt={company.name}
+                  className="h-16 w-16 object-contain"
+                />
+              ) : (
+                <div className="h-16 w-16 bg-gray-200 rounded-lg flex items-center justify-center">
+                  <span className="text-gray-400 text-2xl font-bold">
+                    {company.name.charAt(0).toUpperCase()}
+                  </span>
+                </div>
+              )}
+            </div>
+            <h3 className="text-2xl font-semibold text-gray-900 mb-2">
+              {company.name}
+            </h3>
+            {company.description && (
+              <p className="text-gray-600 text-sm mb-4">
+                {company.description}
+              </p>
+            )}
+            <div className="flex gap-3 mt-6">
+              <button
+                onClick={() => router.push(`/${company.slug}/edit`)}
+                className="flex-1 px-6 py-3 md:max-w-30 bg-black text-white rounded-lg hover:bg-stone-800 hover:text-white transition-all duration-100"
               >
-                <div className="flex items-start justify-between mb-4">
-                  {company.logo ? (
-                    <img
-                      src={company.logo}
-                      alt={company.name}
-                      className="h-12 w-12 object-contain"
-                    />
-                  ) : (
-                    <div className="h-12 w-12 bg-gray-200 rounded-lg flex items-center justify-center">
-                      <span className="text-gray-400 text-xl font-bold">
-                        {company.name.charAt(0).toUpperCase()}
-                      </span>
-                    </div>
-                  )}
-                </div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                  {company.name}
-                </h3>
-                {company.description && (
-                  <p className="text-gray-600 text-sm mb-4 line-clamp-2">
-                    {company.description}
-                  </p>
-                )}
-                <div className="flex gap-2 mt-4">
-                  <button
-                    onClick={() => router.push(`/company/${company.slug}/edit`)}
-                    className="flex-1 px-4 py-2 bg-black text-white text-sm rounded-lg hover:bg-gray-900"
-                  >
-                    Edit
-                  </button>
-                  <button
-                    onClick={() =>
-                      router.push(`/company/${company.slug}/preview`)
-                    }
-                    className="flex-1 px-4 py-2 border border-gray-300 text-sm rounded-lg hover:bg-gray-50"
-                  >
-                    Preview
-                  </button>
-                </div>
-                <div className="mt-3 pt-3 border-t border-gray-100">
-                  <a
-                    href={`/${company.slug}/careers`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-xs text-gray-500 hover:text-black"
-                  >
-                    View Public Page →
-                  </a>
-                </div>
-              </div>
-            ))}
+                Edit
+              </button>
+              <button
+                onClick={() => router.push(`/${company.slug}/preview`)}
+                className="flex-1 px-6 py-3 md:max-w-30 border border-gray-300 rounded-lg hover:bg-gray-100 hover:border-black transition-all duration-100"
+              >
+                Preview
+              </button>
+            </div>
+            <div className="mt-4 pt-4 border-t border-gray-100">
+              <a
+                href={`/${company.slug}/careers`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-sm text-gray-500 hover:text-black"
+              >
+                View Public Page →
+              </a>
+            </div>
           </div>
         )}
       </div>
