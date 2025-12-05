@@ -6,6 +6,7 @@ import { authClient } from "@/lib/auth-client";
 import axios from "axios";
 import CompanyImageSettings from "@/components/CompanyImageSettings";
 import { Loader2 } from "lucide-react";
+import SectionManager from "@/components/SectionManager";
 
 interface Company {
   id: string;
@@ -152,10 +153,7 @@ export default function EditPage() {
         </div>
 
         <div className="mt-8 bg-white rounded-lg shadow-sm border border-gray-200 p-6 lg:p-8">
-          <h2 className="text-lg font-semibold mb-4">Page Sections</h2>
-          <p className="text-gray-500 text-sm">
-            Section management (Hero, About, Culture) will be added here.
-          </p>
+         <SectionManager companySlug={company?.slug || ""}/>
         </div>
 
         {/* Placeholder for jobs */}
