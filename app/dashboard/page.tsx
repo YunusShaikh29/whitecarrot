@@ -4,6 +4,7 @@ import { authClient } from "@/lib/auth-client";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import axios from "axios";
+import { LogOut } from "lucide-react";
 
 interface Company {
   id: string;
@@ -54,6 +55,16 @@ export default function DashboardPage() {
       setError("Failed to load company");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      await authClient.signOut();
+      router.push("/");
+    } catch (err) {
+      console.error("Error signing out:", err);
+      router.push("/");
     }
   };
 
@@ -122,15 +133,24 @@ export default function DashboardPage() {
               Welcome back, {session.user.name || session.user.email}
             </p>
           </div>
-          {!company && (
-          <button
-            onClick={() => setShowCreateForm(!showCreateForm)}
-            className="px-2 py-2 text-xs md:px-6 md:py-3 bg-black text-white rounded-lg hover:bg-gray-900 transition-colors flex justify-center items-center"
-          >
-            {showCreateForm ? "Cancel" : "Create Company"}
-          </button>
-
-          )}
+          <div className="flex items-center gap-3">
+            {!company && (
+              <button
+                onClick={() => setShowCreateForm(!showCreateForm)}
+                className="px-2 py-2 text-xs md:px-6 md:py-3 bg-black text-white rounded-lg hover:bg-gray-900 transition-colors flex justify-center items-center"
+              >
+                {showCreateForm ? "Cancel" : "Create Company"}
+              </button>
+            )}
+            <button
+              onClick={handleLogout}
+              aria-label="Sign out"
+              className="flex items-center gap-2 px-4 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 hover:border-gray-400 transition-colors"
+            >
+              <LogOut className="w-4 h-4" aria-hidden="true" />
+              <span className="hidden sm:inline">Logout</span>
+            </button>
+          </div>
         </div>
 
         {error && (

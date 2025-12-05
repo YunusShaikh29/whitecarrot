@@ -12,6 +12,7 @@ interface Company {
   slug: string;
   name: string;
   description: string | null;
+  websiteUrl: string | null;
   logo: string | null;
   bannerImage: string | null;
   primaryColor: string | null;
@@ -224,8 +225,100 @@ export default function CareersPage() {
   const primaryColor = company.primaryColor || "#000000";
   const secondaryColor = company.secondaryColor || "#FFFFFF";
 
+  const jobPostingStructuredData = allJobs.map((job) => {
+    const employmentTypeMap: Record<string, string> = {
+      FULL_TIME: "FULL_TIME",
+      PART_TIME: "PART_TIME",
+      CONTRACT: "CONTRACT",
+      INTERNSHIP: "INTERNSHIP",
+    };
+
+    const jobLocationTypeMap: Record<string, string> = {
+      REMOTE: "TELECOMMUTE",
+      HYBRID: "TELECOMMUTE",
+      ON_SITE: "",
+    };
+
+    const baseData: any = {
+      "@context": "https://schema.org",
+      "@type": "JobPosting",
+      title: job.title,
+      description: job.description || "",
+      datePosted: job.createdAt,
+      employmentType: employmentTypeMap[job.jobType] || "FULL_TIME",
+      jobLocation: {
+        "@type": "Place",
+        address: {
+          "@type": "PostalAddress",
+          addressLocality: job.location,
+        },
+      },
+    };
+
+    if (job.workMode === "REMOTE" || job.workMode === "HYBRID") {
+      baseData.jobLocationType = jobLocationTypeMap[job.workMode] || "TELECOMMUTE";
+    }
+
+    if (job.salaryRange) {
+      const range = typeof job.salaryRange === "string" 
+        ? JSON.parse(job.salaryRange) 
+        : job.salaryRange;
+      
+      if (range.min || range.max) {
+        baseData.baseSalary = {
+          "@type": "MonetaryAmount",
+          currency: range.currency || "USD",
+          value: {
+            "@type": "QuantitativeValue",
+            minValue: range.min,
+            maxValue: range.max,
+            unitText: "YEAR",
+          },
+        };
+      }
+    }
+
+    if (job.applicationUrl) {
+      baseData.url = job.applicationUrl;
+    }
+
+    if (job.department) {
+      baseData.department = job.department;
+    }
+
+    return baseData;
+  });
+
+  const organizationStructuredData = {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    name: company.name,
+    description: company.description || "",
+    logo: company.logo || "",
+    url: company.websiteUrl || "",
+  };
+
   return (
-    <div className="min-h-screen bg-white">
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(organizationStructuredData),
+        }}
+      />
+      {jobPostingStructuredData.map((jobData, index) => (
+        <script
+          key={index}
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(jobData),
+          }}
+        />
+      ))}
+      <a href="#jobs" className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-black focus:text-white focus:rounded-lg">
+        Skip to job listings
+      </a>
+      <main className="min-h-screen bg-white">
       {company.bannerImage && (
         <div className="relative w-full h-64 md:h-80 bg-gray-200">
           <Image
@@ -265,7 +358,7 @@ export default function CareersPage() {
           />
         ))}
 
-      <div id="jobs" className="py-16 px-4 bg-white">
+      <section id="jobs" aria-label="Open job positions" className="py-16 px-4 bg-white">
         <div className="max-w-6xl mx-auto">
           <div className="mb-8">
             <h2
@@ -277,12 +370,17 @@ export default function CareersPage() {
 
             <div className="space-y-4">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                <label htmlFor="job-search" className="sr-only">
+                  Search jobs by title, location, or department
+                </label>
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" aria-hidden="true" />
                 <input
+                  id="job-search"
                   type="text"
                   placeholder="Search jobs by title, location, or department..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
+                  aria-label="Search jobs"
                   className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent transition"
                   style={{
                     "--tw-ring-color": primaryColor || "#000000",
@@ -301,12 +399,14 @@ export default function CareersPage() {
               <div className="flex items-center justify-between">
                 <button
                   onClick={() => setShowFilters(!showFilters)}
+                  aria-label={showFilters ? "Hide filters" : "Show filters"}
+                  aria-expanded={showFilters}
                   className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
                 >
-                  <Filter className="w-4 h-4" />
+                  <Filter className="w-4 h-4" aria-hidden="true" />
                   Filters
                   {activeFiltersCount > 0 && (
-                    <span className="bg-black text-white text-xs px-2 py-0.5 rounded-full">
+                    <span className="bg-black text-white text-xs px-2 py-0.5 rounded-full" aria-label={`${activeFiltersCount} active filters`}>
                       {activeFiltersCount}
                     </span>
                   )}
@@ -314,6 +414,7 @@ export default function CareersPage() {
                 {activeFiltersCount > 0 && (
                   <button
                     onClick={clearFilters}
+                    aria-label="Clear all filters"
                     className="text-sm flex items-center gap-1 transition"
                     style={{
                       color: primaryColor || "#4B5563",
@@ -325,21 +426,27 @@ export default function CareersPage() {
                       e.currentTarget.style.opacity = "1";
                     }}
                   >
-                    <X className="w-4 h-4" />
+                    <X className="w-4 h-4" aria-hidden="true" />
                     Clear filters
                   </button>
                 )}
               </div>
 
               {showFilters && (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 p-4 bg-gray-50 rounded-lg">
+                <div
+                  role="region"
+                  aria-label="Job filters"
+                  className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 p-4 bg-gray-50 rounded-lg"
+                >
                   <div>
-                    <label className="block text-sm font-medium mb-2">
+                    <label htmlFor="filter-location" className="block text-sm font-medium mb-2">
                       Location
                     </label>
                     <select
+                      id="filter-location"
                       value={selectedLocation}
                       onChange={(e) => setSelectedLocation(e.target.value)}
+                      aria-label="Filter by location"
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg"
                     >
                       <option value="all">All Locations</option>
@@ -352,12 +459,14 @@ export default function CareersPage() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium mb-2">
+                    <label htmlFor="filter-job-type" className="block text-sm font-medium mb-2">
                       Job Type
                     </label>
                     <select
+                      id="filter-job-type"
                       value={selectedJobType}
                       onChange={(e) => setSelectedJobType(e.target.value)}
+                      aria-label="Filter by job type"
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg"
                     >
                       <option value="all">All Types</option>
@@ -369,12 +478,14 @@ export default function CareersPage() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium mb-2">
+                    <label htmlFor="filter-work-mode" className="block text-sm font-medium mb-2">
                       Work Mode
                     </label>
                     <select
+                      id="filter-work-mode"
                       value={selectedWorkMode}
                       onChange={(e) => setSelectedWorkMode(e.target.value)}
+                      aria-label="Filter by work mode"
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg"
                     >
                       <option value="all">All Modes</option>
@@ -385,12 +496,14 @@ export default function CareersPage() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium mb-2">
+                    <label htmlFor="filter-department" className="block text-sm font-medium mb-2">
                       Department
                     </label>
                     <select
+                      id="filter-department"
                       value={selectedDepartment}
                       onChange={(e) => setSelectedDepartment(e.target.value)}
+                      aria-label="Filter by department"
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg"
                     >
                       <option value="all">All Departments</option>
@@ -422,6 +535,7 @@ export default function CareersPage() {
               {activeFiltersCount > 0 && (
                 <button
                   onClick={clearFilters}
+                  aria-label="Clear filters to see all jobs"
                   className="transition"
                   style={{
                     color: primaryColor || "#2563EB",
@@ -440,7 +554,7 @@ export default function CareersPage() {
           ) : (
             <div className="space-y-4">
               {filteredJobs.map((job) => (
-                <div
+                <article
                   key={job.id}
                   className="border-2 rounded-lg p-6 hover:shadow-md transition"
                   style={{
@@ -452,6 +566,7 @@ export default function CareersPage() {
                   onMouseLeave={(e) => {
                     e.currentTarget.style.borderColor = primaryColor ? `${primaryColor}30` : "#E5E7EB";
                   }}
+                  aria-label={`Job posting: ${job.title} in ${job.location}`}
                 >
                   <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
                     <div className="flex-1">
@@ -468,15 +583,15 @@ export default function CareersPage() {
                       )}
                       <div className="flex flex-wrap items-center gap-4 text-sm text-gray-500 mb-2">
                         <div className="flex items-center gap-1">
-                          <MapPin className="w-4 h-4" />
+                          <MapPin className="w-4 h-4" aria-hidden="true" />
                           <span>{job.location}</span>
                         </div>
                         <div className="flex items-center gap-1">
-                          <Briefcase className="w-4 h-4" />
+                          <Briefcase className="w-4 h-4" aria-hidden="true" />
                           <span>{formatJobType(job.jobType)}</span>
                         </div>
                         <div className="flex items-center gap-1">
-                          <Clock className="w-4 h-4" />
+                          <Clock className="w-4 h-4" aria-hidden="true" />
                           <span>{formatWorkMode(job.workMode)}</span>
                         </div>
                         {job.department && (
@@ -500,25 +615,27 @@ export default function CareersPage() {
                           href={job.applicationUrl}
                           target="_blank"
                           rel="noopener noreferrer"
+                          aria-label={`Apply for ${job.title} position`}
                           className="px-6 py-2 bg-black text-white rounded-lg hover:bg-gray-900 transition whitespace-nowrap"
                           style={{ backgroundColor: primaryColor }}
                         >
                           Apply Now
                         </a>
                       ) : (
-                        <span className="px-6 py-2 bg-gray-200 text-gray-500 rounded-lg whitespace-nowrap">
+                        <span className="px-6 py-2 bg-gray-200 text-gray-500 rounded-lg whitespace-nowrap" aria-label="Application link coming soon">
                           Apply Soon
                         </span>
                       )}
                     </div>
                   </div>
-                </div>
+                </article>
               ))}
             </div>
           )}
         </div>
-      </div>
-    </div>
+      </section>
+    </main>
+    </>
   );
 }
 

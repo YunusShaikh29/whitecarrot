@@ -46,6 +46,7 @@ export default function SectionRenderer({
               {heroContent.ctaText && (
                 <a
                   href="#jobs"
+                  aria-label={`${heroContent.ctaText} - View open positions`}
                   className="inline-block px-8 py-3 font-semibold rounded-lg transition"
                   style={{
                     backgroundColor: primaryColor || "#FFFFFF",
