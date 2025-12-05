@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { authClient } from "@/lib/auth-client";
 import axios from "axios";
 import CompanyImageSettings from "@/components/CompanyImageSettings";
+import CompanyBrandSettings from "@/components/CompanyBrandSettings";
 import { Loader2 } from "lucide-react";
 import SectionManager from "@/components/SectionManager";
 import JobManager from "@/components/JobManager";
@@ -19,6 +20,7 @@ interface Company {
   bannerImage: string | null;
   primaryColor: string | null;
   secondaryColor: string | null;
+  cultureVideoUrl: string | null;
   userId: string;
 }
 
@@ -149,6 +151,16 @@ export default function EditPage() {
             companySlug={company?.slug || ""}
             currentLogo={company?.logo}
             currentBanner={company?.bannerImage}
+            onUpdate={handleUpdate}
+          />
+        </div>
+
+        <div className="mt-8 bg-white rounded-lg shadow-sm border border-gray-200 p-6 lg:p-8">
+          <CompanyBrandSettings
+            companySlug={company?.slug || ""}
+            currentPrimaryColor={company?.primaryColor}
+            currentSecondaryColor={company?.secondaryColor}
+            currentCultureVideoUrl={company?.cultureVideoUrl}
             onUpdate={handleUpdate}
           />
         </div>

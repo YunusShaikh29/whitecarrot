@@ -10,15 +10,30 @@ interface Section {
 
 interface SectionRendererProps {
   section: Section;
+  cultureVideoUrl?: string | null;
+  primaryColor?: string | null;
+  secondaryColor?: string | null;
 }
 
-export default function SectionRenderer({ section }: SectionRendererProps) {
+export default function SectionRenderer({
+  section,
+  cultureVideoUrl,
+  primaryColor,
+  secondaryColor,
+}: SectionRendererProps) {
   const renderContent = () => {
     switch (section.type) {
       case "HERO":
         const heroContent = section.content || {};
         return (
-          <div className="relative bg-gradient-to-r from-gray-900 to-gray-800 text-white py-20 px-4">
+          <div
+            className="relative text-white py-20 px-4"
+            style={{
+              background: primaryColor
+                ? `linear-gradient(135deg, ${primaryColor} 0%, ${primaryColor}dd 100%)`
+                : "linear-gradient(135deg, #111827 0%, #1F2937 100%)",
+            }}
+          >
             <div className="max-w-4xl mx-auto text-center">
               <h1 className="text-4xl md:text-5xl font-bold mb-4">
                 {heroContent.headline || section.title || "Join Our Team"}
@@ -31,7 +46,11 @@ export default function SectionRenderer({ section }: SectionRendererProps) {
               {heroContent.ctaText && (
                 <a
                   href="#jobs"
-                  className="inline-block px-8 py-3 bg-white text-gray-900 font-semibold rounded-lg hover:bg-gray-100 transition"
+                  className="inline-block px-8 py-3 font-semibold rounded-lg transition"
+                  style={{
+                    backgroundColor: primaryColor || "#FFFFFF",
+                    color: secondaryColor || "#000000",
+                  }}
                 >
                   {heroContent.ctaText}
                 </a>
@@ -46,7 +65,12 @@ export default function SectionRenderer({ section }: SectionRendererProps) {
           <div className="py-16 px-4 bg-white">
             <div className="max-w-4xl mx-auto">
               {section.title && (
-                <h2 className="text-3xl font-bold mb-6">{section.title}</h2>
+                <h2
+                  className="text-3xl font-bold mb-6"
+                  style={{ color: primaryColor || "#000000" }}
+                >
+                  {section.title}
+                </h2>
               )}
               {aboutContent.description && (
                 <div className="prose prose-lg max-w-none">
@@ -60,9 +84,15 @@ export default function SectionRenderer({ section }: SectionRendererProps) {
                   {aboutContent.values.map((value: string, index: number) => (
                     <div
                       key={index}
-                      className="p-4 bg-gray-50 rounded-lg"
+                      className="p-4 rounded-lg border-2"
+                      style={{
+                        backgroundColor: secondaryColor || "#F9FAFB",
+                        borderColor: primaryColor || "#E5E7EB",
+                      }}
                     >
-                      <p className="font-medium">{value}</p>
+                      <p className="font-medium" style={{ color: primaryColor || "#000000" }}>
+                        {value}
+                      </p>
                     </div>
                   ))}
                 </div>
@@ -74,10 +104,31 @@ export default function SectionRenderer({ section }: SectionRendererProps) {
       case "CULTURE":
         const cultureContent = section.content || {};
         return (
-          <div className="py-16 px-4 bg-gray-50">
+          <div
+            className="py-16 px-4"
+            style={{ backgroundColor: secondaryColor || "#F9FAFB" }}
+          >
             <div className="max-w-4xl mx-auto">
               {section.title && (
-                <h2 className="text-3xl font-bold mb-6">{section.title}</h2>
+                <h2
+                  className="text-3xl font-bold mb-6"
+                  style={{ color: primaryColor || "#000000" }}
+                >
+                  {section.title}
+                </h2>
+              )}
+              {cultureVideoUrl && (
+                <div className="mb-8">
+                  <div className="relative w-full aspect-video rounded-lg overflow-hidden shadow-lg">
+                    <iframe
+                      src={cultureVideoUrl}
+                      title="Culture Video"
+                      className="absolute top-0 left-0 w-full h-full"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      allowFullScreen
+                    />
+                  </div>
+                </div>
               )}
               {cultureContent.description && (
                 <div className="prose prose-lg max-w-none mb-8">

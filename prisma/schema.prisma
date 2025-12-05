@@ -81,6 +81,7 @@ model Company {
   bannerImage     String?   
   primaryColor    String?   @default("#000000") // Brand color
   secondaryColor  String?   @default("#FFFFFF") // Brand color
+  cultureVideoUrl String?  
   userId          String    @unique 
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt

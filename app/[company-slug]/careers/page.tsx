@@ -16,6 +16,7 @@ interface Company {
   bannerImage: string | null;
   primaryColor: string | null;
   secondaryColor: string | null;
+  cultureVideoUrl: string | null;
 }
 
 interface Section {
@@ -41,6 +42,7 @@ interface Job {
   } | null;
   applicationUrl: string | null;
   isActive: boolean | null;
+  createdAt: string;
 }
 
 export default function CareersPage() {
@@ -161,6 +163,25 @@ export default function CareersPage() {
     return null;
   };
 
+  const formatPostedDate = (createdAt: string) => {
+    const now = new Date();
+    const postedDate = new Date(createdAt);
+    
+    const nowMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const postedMidnight = new Date(postedDate.getFullYear(), postedDate.getMonth(), postedDate.getDate());
+    
+    const diffTime = nowMidnight.getTime() - postedMidnight.getTime();
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+    
+    if (diffDays === 0) {
+      return "Posted today";
+    } else if (diffDays === 1) {
+      return "Posted 1 day ago";
+    } else {
+      return `Posted ${diffDays} days ago`;
+    }
+  };
+
   const locations = Array.from(new Set(allJobs.map((j) => j.location))).sort();
   const departments = Array.from(
     new Set(allJobs.map((j) => j.department).filter(Boolean))
@@ -235,13 +256,24 @@ export default function CareersPage() {
       {sections
         .filter((s) => s.type !== "JOBS")
         .map((section) => (
-          <SectionRenderer key={section.id} section={section} />
+          <SectionRenderer
+            key={section.id}
+            section={section}
+            cultureVideoUrl={company.cultureVideoUrl}
+            primaryColor={primaryColor}
+            secondaryColor={secondaryColor}
+          />
         ))}
 
       <div id="jobs" className="py-16 px-4 bg-white">
         <div className="max-w-6xl mx-auto">
           <div className="mb-8">
-            <h2 className="text-3xl font-bold mb-6">Open Positions</h2>
+            <h2
+              className="text-3xl font-bold mb-6"
+              style={{ color: primaryColor || "#000000" }}
+            >
+              Open Positions
+            </h2>
 
             <div className="space-y-4">
               <div className="relative">
@@ -251,7 +283,18 @@ export default function CareersPage() {
                   placeholder="Search jobs by title, location, or department..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent"
+                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent transition"
+                  style={{
+                    "--tw-ring-color": primaryColor || "#000000",
+                  } as React.CSSProperties & { "--tw-ring-color": string }}
+                  onFocus={(e) => {
+                    e.currentTarget.style.borderColor = primaryColor || "#000000";
+                    e.currentTarget.style.boxShadow = `0 0 0 2px ${primaryColor || "#000000"}40`;
+                  }}
+                  onBlur={(e) => {
+                    e.currentTarget.style.borderColor = "";
+                    e.currentTarget.style.boxShadow = "";
+                  }}
                 />
               </div>
 
@@ -271,7 +314,16 @@ export default function CareersPage() {
                 {activeFiltersCount > 0 && (
                   <button
                     onClick={clearFilters}
-                    className="text-sm text-gray-600 hover:text-gray-900 flex items-center gap-1"
+                    className="text-sm flex items-center gap-1 transition"
+                    style={{
+                      color: primaryColor || "#4B5563",
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.opacity = "0.8";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.opacity = "1";
+                    }}
                   >
                     <X className="w-4 h-4" />
                     Clear filters
@@ -370,7 +422,16 @@ export default function CareersPage() {
               {activeFiltersCount > 0 && (
                 <button
                   onClick={clearFilters}
-                  className="text-blue-600 hover:text-blue-700"
+                  className="transition"
+                  style={{
+                    color: primaryColor || "#2563EB",
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.opacity = "0.8";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.opacity = "1";
+                  }}
                 >
                   Clear filters to see all jobs
                 </button>
@@ -381,11 +442,25 @@ export default function CareersPage() {
               {filteredJobs.map((job) => (
                 <div
                   key={job.id}
-                  className="border border-gray-200 rounded-lg p-6 hover:shadow-md transition"
+                  className="border-2 rounded-lg p-6 hover:shadow-md transition"
+                  style={{
+                    borderColor: primaryColor ? `${primaryColor}30` : "#E5E7EB",
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.borderColor = primaryColor || "#D1D5DB";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.borderColor = primaryColor ? `${primaryColor}30` : "#E5E7EB";
+                  }}
                 >
                   <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
                     <div className="flex-1">
-                      <h3 className="text-xl font-semibold mb-2">{job.title}</h3>
+                      <h3
+                        className="text-xl font-semibold mb-2"
+                        style={{ color: primaryColor || "#000000" }}
+                      >
+                        {job.title}
+                      </h3>
                       {job.description && (
                         <p className="text-gray-600 mb-4 line-clamp-3">
                           {job.description}
@@ -414,6 +489,9 @@ export default function CareersPage() {
                             {formatSalary(job.salaryRange)}
                           </span>
                         )}
+                        <span className="text-xs text-gray-400">
+                          {formatPostedDate(job.createdAt)}
+                        </span>
                       </div>
                     </div>
                     <div className="flex items-center gap-3">

@@ -17,6 +17,7 @@ interface Company {
   bannerImage: string | null;
   primaryColor: string | null;
   secondaryColor: string | null;
+  cultureVideoUrl: string | null;
 }
 
 interface Section {
@@ -38,6 +39,7 @@ interface Job {
   salaryRange: any;
   applicationUrl: string | null;
   isActive: boolean | null;
+  createdAt: string;
 }
 
 export default function PreviewPage() {
@@ -140,7 +142,6 @@ export default function PreviewPage() {
 
   return (
     <div className="min-h-screen bg-white">
-      {/* Preview Header */}
       <div className="bg-gray-100 border-b border-gray-200 px-4 py-3">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -197,12 +198,23 @@ export default function PreviewPage() {
       {sections
         .filter((s) => s.type !== "JOBS")
         .map((section) => (
-          <SectionRenderer key={section.id} section={section} />
+          <SectionRenderer
+            key={section.id}
+            section={section}
+            cultureVideoUrl={company?.cultureVideoUrl}
+            primaryColor={primaryColor}
+            secondaryColor={secondaryColor}
+          />
         ))}
 
       <div id="jobs" className="py-16 px-4 bg-white">
         <div className="max-w-6xl mx-auto">
-          <h2 className="text-3xl font-bold mb-8">Open Positions</h2>
+            <h2
+              className="text-3xl font-bold mb-8"
+              style={{ color: primaryColor || "#000000" }}
+            >
+              Open Positions
+            </h2>
           {jobs.length === 0 ? (
             <p className="text-gray-500">No open positions at the moment.</p>
           ) : (
@@ -210,11 +222,25 @@ export default function PreviewPage() {
               {jobs.map((job) => (
                 <div
                   key={job.id}
-                  className="border border-gray-200 rounded-lg p-6 hover:shadow-md transition"
+                  className="border-2 rounded-lg p-6 hover:shadow-md transition"
+                  style={{
+                    borderColor: primaryColor ? `${primaryColor}30` : "#E5E7EB",
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.borderColor = primaryColor || "#D1D5DB";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.borderColor = primaryColor ? `${primaryColor}30` : "#E5E7EB";
+                  }}
                 >
                   <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
                     <div className="flex-1">
-                      <h3 className="text-xl font-semibold mb-2">{job.title}</h3>
+                      <h3
+                        className="text-xl font-semibold mb-2"
+                        style={{ color: primaryColor || "#000000" }}
+                      >
+                        {job.title}
+                      </h3>
                       {job.description && (
                         <p className="text-gray-600 mb-4 line-clamp-2">
                           {job.description}
@@ -232,6 +258,20 @@ export default function PreviewPage() {
                             <span>{job.department}</span>
                           </>
                         )}
+                        <span>•</span>
+                        <span className="text-xs text-gray-400">
+                          {(() => {
+                            const now = new Date();
+                            const postedDate = new Date(job.createdAt);
+                            const nowMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+                            const postedMidnight = new Date(postedDate.getFullYear(), postedDate.getMonth(), postedDate.getDate());
+                            const diffTime = nowMidnight.getTime() - postedMidnight.getTime();
+                            const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+                            if (diffDays === 0) return "Posted today";
+                            if (diffDays === 1) return "Posted 1 day ago";
+                            return `Posted ${diffDays} days ago`;
+                          })()}
+                        </span>
                       </div>
                     </div>
                     {job.applicationUrl && (

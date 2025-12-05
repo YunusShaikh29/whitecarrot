@@ -6,7 +6,7 @@ import { z } from "zod";
 
 export async function PATCH(
   request: Request,
-  { params }: { params: { slug: string } }
+  { params }: { params: Promise<{ slug: string }> }
 ) {
   try {
     const headersList = await headers();
@@ -20,7 +20,7 @@ export async function PATCH(
 
     const company = await db.company.findFirst({
       where: {
-        slug: params.slug,
+        slug: (await params).slug,
         userId: session.user.id,
       },
     });
@@ -42,6 +42,14 @@ export async function PATCH(
       bannerImage: z.url().optional().nullable(),
       primaryColor: z.string().optional(),
       secondaryColor: z.string().optional(),
+      cultureVideoUrl: z
+        .union([
+          z.string().url(),
+          z.literal(""),
+          z.null(),
+        ])
+        .optional()
+        .transform((val) => (val === "" ? null : val)),
     });
 
     const validatedData = schema.parse(body);
