@@ -7,6 +7,7 @@ import axios from "axios";
 import CompanyImageSettings from "@/components/CompanyImageSettings";
 import { Loader2 } from "lucide-react";
 import SectionManager from "@/components/SectionManager";
+import JobManager from "@/components/JobManager";
 
 interface Company {
   id: string;
@@ -156,12 +157,8 @@ export default function EditPage() {
          <SectionManager companySlug={company?.slug || ""}/>
         </div>
 
-        {/* Placeholder for jobs */}
         <div className="mt-8 bg-white rounded-lg shadow-sm border border-gray-200 p-6 lg:p-8">
-          <h2 className="text-lg font-semibold mb-4">Job Listings</h2>
-          <p className="text-gray-500 text-sm">
-            Job management will be added here.
-          </p>
+          <JobManager companySlug={company?.slug || ""} />
         </div>
       </div>
     </div>
