@@ -50,7 +50,8 @@ export default function SectionCard({
       <div
         {...attributes}
         {...listeners}
-        className="cursor-grab active:cursor-grabbing text-gray-400 hover:text-gray-600"
+        className="cursor-grab active:cursor-grabbing text-gray-400 hover:text-gray-600 touch-none select-none"
+        style={{ touchAction: "none" }}
       >
         <GripVertical className="w-5 h-5" />
       </div>
