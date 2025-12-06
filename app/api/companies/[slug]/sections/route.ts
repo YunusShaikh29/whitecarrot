@@ -5,8 +5,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod"
 
 
-export async function GET(req: NextRequest, { params }: { params: { "company-slug": string } }) {
-
+export async function GET(
+  req: NextRequest,
+  { params }: { params: Promise<{ slug: string }> }
+) {
     try {
         const headerList = await headers()
         const session = await auth.api.getSession({ headers: headerList })
@@ -15,9 +17,11 @@ export async function GET(req: NextRequest, { params }: { params: { "company-slu
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
         }
 
+        const { slug } = await params;
+
         const company = await db.company.findFirst({
             where: {
-                slug: params["company-slug"],
+                slug: slug,
                 userId: session.user.id
             },
             include: {
@@ -49,7 +53,10 @@ const createSectionSchema = z.object({
     order: z.number().optional()
 })
 
-export async function POST(request: NextRequest, { params }: { params: { "company-slug": string } }) {
+export async function POST(
+  request: NextRequest,
+  { params }: { params: Promise<{ slug: string }> }
+) {
     try {
         const headerList = await headers()
         const session = await auth.api.getSession({ headers: headerList })
@@ -58,9 +65,11 @@ export async function POST(request: NextRequest, { params }: { params: { "compan
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
         }
 
+        const { slug } = await params;
+
         const company = await db.company.findFirst({
             where: {
-                slug: params["company-slug"],
+                slug: slug,
                 userId: session.user.id
             }
         })
