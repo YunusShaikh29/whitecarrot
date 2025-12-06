@@ -2,23 +2,26 @@ import { betterAuth } from "better-auth"
 import { prismaAdapter } from "better-auth/adapters/prisma"
 import db from "@/lib/db"
 
+const requiredEnvVars = {
+    NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
+    BETTER_AUTH_SECRET: process.env.BETTER_AUTH_SECRET,
+    GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID,
+    GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET,
+    DATABASE_URL: process.env.DATABASE_URL,
+};
 
-if (!process.env.NEXT_PUBLIC_APP_URL) {
-    throw new Error('NEXT_PUBLIC_APP_URL is not set in .env file');
-}
-if (!process.env.BETTER_AUTH_SECRET) {
-    throw new Error('BETTER_AUTH_SECRET is not set in .env file');
-}
-if (!process.env.GOOGLE_CLIENT_ID) {
-    throw new Error('GOOGLE_CLIENT_ID is not set in .env file');
-}
-if (!process.env.GOOGLE_CLIENT_SECRET) {
-    throw new Error('GOOGLE_CLIENT_SECRET is not set in .env file');
-}
-if (!process.env.DATABASE_URL) {
-    throw new Error('DATABASE_URL is not set in .env file');
+const missingVars = Object.entries(requiredEnvVars)
+    .filter(([_, value]) => !value)
+    .map(([key]) => key);
+
+if (missingVars.length > 0) {
+    console.error(`Missing required environment variables: ${missingVars.join(', ')}`);
 }
 
+const baseUrl = process.env.NEXT_PUBLIC_APP_URL || '';
+const trustedOriginsList = process.env.TRUSTED_ORIGINS 
+    ? process.env.TRUSTED_ORIGINS.split(/,\s*/).filter(Boolean)
+    : [baseUrl].filter(Boolean);
 
 export const auth = betterAuth({
     database: prismaAdapter(db, {
@@ -26,16 +29,13 @@ export const auth = betterAuth({
     }),
     socialProviders: {
         google: {
-            clientId: process.env.GOOGLE_CLIENT_ID!,
-            clientSecret: process.env.GOOGLE_CLIENT_SECRET!
+            clientId: process.env.GOOGLE_CLIENT_ID || '',
+            clientSecret: process.env.GOOGLE_CLIENT_SECRET || '',
         }
     },
-    secret: process.env.BETTER_AUTH_SECRET!,
-    baseURL: process.env.NEXT_PUBLIC_APP_URL!,
-    trustedOrigins: (
-        process.env.TRUSTED_ORIGINS ||
-        `${process.env.NEXT_PUBLIC_APP_URL}`
-    ).split(/,\s*/).filter(Boolean),
+    secret: process.env.BETTER_AUTH_SECRET || '',
+    baseURL: baseUrl,
+    trustedOrigins: trustedOriginsList,
     emailAndPassword: {
         enabled: true
     }
